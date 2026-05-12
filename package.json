@@ -1,0 +1,60 @@
+{
+  "name": "uk-rail-data-js",
+  "version": "0.0.1",
+  "description": "A library for consuming UK rail data, particularly from Network Rail's APIs.",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
+    "prepublishOnly": "pnpm run build"
+  },
+  "keywords": [
+    "uk",
+    "united kingdom",
+    "rail",
+    "trains",
+    "train-describer",
+    "trust",
+    "train-movements",
+    "bplan",
+    "schedule",
+    "cif",
+    "smart",
+    "network rail",
+    "typescript"
+  ],
+  "author": "Cameron Johnston <hopperelec@gmail.com>",
+  "license": "CC-BY-SA-4.0",
+  "homepage": "https://github.com/hopperelec/uk-rail-data-js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hopperelec/uk-rail-data-js.git"
+  },
+  "bugs": {
+    "url": "https://github.com/hopperelec/uk-rail-data-js/issues"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "kafkajs": "^2.2.4"
+  },
+  "devDependencies": {
+    "@types/node": "^25.7.0",
+    "tslib": "^2.8.1",
+    "tsup": "^8.5.1",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.3"
+  }
+}
