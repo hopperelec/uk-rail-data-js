@@ -1,4 +1,4 @@
-import {BerthName} from "../../types";
+import {BerthName, UnixEpochMsTimestamp} from "../../../types";
 
 /**
  * 2-character alphanumeric code representing the train describer that sent a message
@@ -103,5 +103,11 @@ export type CClassMsg = CaMsg | CbMsg | CcMsg | CtMsg;
 /** A message received from a train describer related to signalling updates */
 export type SClassMsg = SfMsg | SgMsg | ShMsg;
 
-/** A message received from a train describer */
+/** A message received from a train describer and parsed */
 export type TrainDescriberMsg = CClassMsg | SClassMsg;
+
+/** Utility type to apply `Omit` distributively over unions */
+type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
+
+/** The raw message format received from the train describer feed before parsing */
+export type RawTrainDescriberMsg = DistributiveOmit<TrainDescriberMsg, 'time'> & { time: UnixEpochMsTimestamp };

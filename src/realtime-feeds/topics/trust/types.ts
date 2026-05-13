@@ -1,5 +1,5 @@
-import {StpIndicator, TrainServiceCode, TrainUID} from "../../static/schedule/cif";
-import {UnixEpochMsTimestamp, StanoxCode, Routing} from "../../types";
+import {StpIndicator, TrainServiceCode, TrainUID} from "../../../static/schedule/cif";
+import {UnixEpochMsTimestamp, StanoxCode, Routing} from "../../../types";
 
 // #region Core
 

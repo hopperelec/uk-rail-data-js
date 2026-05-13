@@ -47,11 +47,14 @@
     "url": "https://github.com/hopperelec/uk-rail-data-js/issues"
   },
   "dependencies": {
+    "@stomp/stompjs": "^7.3.0",
     "dotenv": "^17.4.2",
-    "kafkajs": "^2.2.4"
+    "kafkajs": "^2.2.4",
+    "ws": "^8.20.1"
   },
   "devDependencies": {
     "@types/node": "^25.7.0",
+    "@types/ws": "^8.18.1",
     "tslib": "^2.8.1",
     "tsup": "^8.5.1",
     "tsx": "^4.21.0",
