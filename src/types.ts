@@ -20,7 +20,7 @@ export type TIPLOC = string;
  *
  * @see {@link https://wiki.openraildata.com/index.php/STANOX}
  */
-export type StanoxCode = number;
+export type StanoxCode = `${number}`;
 
 /**
  * UNIX epoch millisecond timestamp as a string

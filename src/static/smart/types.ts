@@ -1,5 +1,5 @@
 import {BerthName, Routing, StanoxCode} from "../../types";
-import {TrainDescriberId} from "../../kafka-feeds/train-describer";
+import {TrainDescriberId} from "../../realtime-feeds/topics/train-describer";
 
 /** A mapping from a berth event (step) to how to interpret it. */
 export interface SmartStep {
@@ -28,7 +28,7 @@ export interface SmartStep {
      * STANOX code for the location of the step
      * https://wiki.openraildata.com/index.php/STANOX
      */
-    STANOX: `${StanoxCode}`,
+    STANOX: StanoxCode,
     /** Abbreviated description of location */
     STANME: string
     /** The platform number associated with the step, if applicable. */

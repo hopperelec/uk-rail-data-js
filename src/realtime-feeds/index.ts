@@ -1,5 +1,5 @@
 import {parseTrainDescriberMessage, RawTrainDescriberMsg, TrainDescriberMsg} from "./topics/train-describer";
-import {TrustMessage} from "./topics/trust";
+import {parseTrustMessage, RawTrust, ParsedTrust} from "./topics/trust";
 
 /** A subscription to a topic on a Network Rail realtime feed. */
 export interface NetworkRailRealtimeSubscription {
@@ -59,14 +59,13 @@ export abstract class NetworkRailRealtimeClient<SubscriptionOptions> {
      * @see {@link https://wiki.openraildata.com/index.php/Train_Movements}
      */
     subscribeToTrust(
-        onMessage: (message: TrustMessage) => void,
+        onMessage: (message: ParsedTrust.TrustMessage) => void,
         onError?: (error: unknown) => void,
         options?: SubscriptionOptions,
     ): Promise<NetworkRailRealtimeSubscription> {
         return this.subscribe('TRAIN_MVT_ALL_TOC', message => {
             try {
-                // TODO: Parse into a more usable format
-                onMessage(message as TrustMessage);
+                onMessage(parseTrustMessage(message as RawTrust.TrustMessage));
             } catch (err) {
                 onError?.(err);
             }

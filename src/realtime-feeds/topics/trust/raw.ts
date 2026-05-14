@@ -43,10 +43,20 @@ export type TocId = `${number}`;
  */
 export type DelayAttributionCode = string;
 
+/** 4-digit numeric code from 0001 to 0008 identifying the type of message from the TRUST feed. */
+export type TrustMsgType =
+    | "0001" // Call/Activation
+    | "0002" // Cancellation
+    | "0003" // Movement
+    // "0004" for "Unidentified train" is not used in production
+    | "0005" // Reinstatement
+    | "0006" // Change of Origin
+    | "0007" // Change of Identity
+    | "0008"; // Change of Location
+
 /** The header of a message from the TRUST feed. */
 export interface TrustMsgHeader {
-    /** 4-digit numeric code from 0001 to 0008 identifying the type of message. */
-    msg_type: string;
+    msg_type: TrustMsgType;
     /** When the message was pushed to the queue. */
     msg_queue_timestamp: UnixEpochMsTimestamp;
     /**
@@ -67,7 +77,7 @@ export interface TrustMsgHeader {
 }
 
 /** Base structure for the body of any message from the TRUST feed. */
-interface TrustMsgBodyBase {
+export interface TrustMsgBodyBase {
     /**
      * The unique train ID allocated at call/activation time,
      *  which will be the same for all messages relating to the same train,
@@ -101,9 +111,11 @@ interface TrustMsgBase {
  *
  * @see {@link https://wiki.openraildata.com/index.php/Train_Activation
  */
-export interface TrustCallHeader extends Omit<TrustMsgHeader, 'source_dev_id' | 'user_id'> {
+export interface TrustCallHeader extends TrustMsgHeader {
     msg_type: "0001";
     original_data_source: "TSIA";
+    source_dev_id?: never;
+    user_id?: never;
 }
 
 /**
@@ -111,12 +123,14 @@ export interface TrustCallHeader extends Omit<TrustMsgHeader, 'source_dev_id' | 
  *
  * @see {@link https://wiki.openraildata.com/index.php/Train_Activation}
  */
-export interface TrustCallBody extends Omit<TrustMsgBodyBase, 'current_train_id'> {
+export interface TrustCallBody extends TrustMsgBodyBase {
+    current_train_id?: never;
+
     toc_id: TocId;
 
     /** C from CIF/ITPS, V from VSTP/TOPS */
     schedule_source: "C" | "V";
-    /** Either 00000 for a CIF/ITPS schedule, or the TOPS unique ID of the schedule. */
+    /** Either `"00000"` for a CIF/ITPS schedule, or the TOPS unique ID of the schedule. */
     d1266_record_number: `${number}`;
 
     /** Start date of the schedule */
@@ -147,9 +161,9 @@ export interface TrustCallBody extends Omit<TrustMsgBodyBase, 'current_train_id'
     origin_dep_timestamp: UnixEpochMsTimestamp;
 
     /** Where the train is scheduled to start. */
-    sched_origin_stanox: `${StanoxCode}`;
+    sched_origin_stanox: StanoxCode;
     /** The origin location when different to the original schedule. */
-    tp_origin_stanox?: `${StanoxCode}`;
+    tp_origin_stanox?: StanoxCode;
 }
 
 /**
@@ -181,7 +195,9 @@ export interface TrustCancellationHeader extends TrustMsgHeader {
  *
  * @see {@link https://wiki.openraildata.com/index.php/Train_Cancellation}
  */
-export interface TrustCancellationBody extends Omit<TrustMsgBodyBase, 'current_train_id'> {
+export interface TrustCancellationBody extends TrustMsgBodyBase {
+    current_train_id?: never;
+
     toc_id: TocId;
     division_code: TocId;
 
@@ -196,7 +212,7 @@ export interface TrustCancellationBody extends Omit<TrustMsgBodyBase, 'current_t
      * For an `"OUT OF PLAN"` cancellation,
      *  this is the location that the train should have been according to the schedule.
      */
-    orig_loc_stanox?: `${StanoxCode}`;
+    orig_loc_stanox?: StanoxCode;
     /**
      * For an "OUT OF PLAN" cancellation,
      *  this is the departure time of the location that the train should have been at according to the schedule.
@@ -204,12 +220,12 @@ export interface TrustCancellationBody extends Omit<TrustMsgBodyBase, 'current_t
     orig_loc_timestamp?: UnixEpochMsTimestamp;
 
     /**
-     * The STANOX of the location that the train is being cancelled from.
+     * The the location that the train is being cancelled from.
      *
      * For an OUT OF PLAN cancellation,
      *  this location will not be in the schedule, but a Train Movement message will have already been sent.
      */
-    loc_stanox: `${StanoxCode}`;
+    loc_stanox: StanoxCode;
     /** The departure time at the location that the train is cancelled from. */
     dep_timestamp: UnixEpochMsTimestamp;
 }
@@ -253,11 +269,11 @@ export interface TrustMovementBody extends TrustMsgBodyBase {
     planned_event_type: "ARRIVAL" | "DEPARTURE" | "DESTINATION";
 
     /** The location at which this event happened */
-    loc_stanox: `${StanoxCode}`;
+    loc_stanox: StanoxCode;
     /** The location that generated this report. Can be `"00000"` for manual or off-route reports. */
-    reporting_stanox?: `${StanoxCode}`;
+    reporting_stanox?: StanoxCode;
     /** If the location has been revised, the location in the schedule at activation time. */
-    original_loc_stanox?: `${StanoxCode}`;
+    original_loc_stanox?: StanoxCode;
 
     direction_ind?: "UP" | "DOWN";
     route?: Routing;
@@ -274,7 +290,7 @@ export interface TrustMovementBody extends TrustMsgBodyBase {
     original_loc_timestamp?: UnixEpochMsTimestamp;
 
     /** The location at which the next report for this train is due. */
-    next_report_stanox?: `${StanoxCode}`;
+    next_report_stanox?: StanoxCode;
     /** Minutes until next report is expected. */
     next_report_run_time?: `${number}`;
 
@@ -304,7 +320,7 @@ export interface TrustMovementBodyOffRoute extends TrustMovementBody {
     offroute_ind: "true";
     timetable_variation: "0";
     variation_status: "OFF ROUTE";
-    planned_timestamp: never;
+    planned_timestamp?: never;
 }
 
 /**
@@ -343,10 +359,10 @@ export interface TrustReinstatementBody extends TrustMsgBodyBase {
     /** The planned time associated with the original location. */
     original_loc_timestamp?: UnixEpochMsTimestamp;
     /** If the location has been revised, the location in the schedule at activation time. */
-    original_loc_stanox?: `${StanoxCode}`;
+    original_loc_stanox?: StanoxCode;
 
     /** The location at which this event happened. */
-    loc_stanox: `${StanoxCode}`;
+    loc_stanox: StanoxCode;
     /** When the train was reinstated. */
     reinstatement_timestamp: UnixEpochMsTimestamp;
     /** The planned departure time at the location where the train is being reinstated. */
@@ -383,20 +399,19 @@ export interface TrustChangeOfOriginHeader extends TrustMsgHeader {
  * @see {@link https://wiki.openraildata.com/index.php/Change_of_Origin}
  */
 export interface TrustChangeOfOriginBody extends TrustMsgBodyBase {
-
     toc_id: TocId;
     division_code: TocId;
 
     /**
      * If the location has been revised, e.g. the new origin is 'out of plan' for the train,
-     *  the STANOX of the location in the schedule at activation time.
+     *  the location in the schedule at activation time.
      */
-    original_loc_stanox?: `${StanoxCode}`;
+    original_loc_stanox?: StanoxCode;
     /** The planned time associated with the original location. */
     original_loc_timestamp?: UnixEpochMsTimestamp;
 
     /** The new origin of the train. */
-    loc_stanox: `${StanoxCode}`;
+    loc_stanox: StanoxCode;
     /** When the Change of Origin was entered into TRUST. */
     coo_timestamp: UnixEpochMsTimestamp;
     /** The planned departure time at the new origin. */
@@ -473,9 +488,9 @@ export interface TrustChangeOfLocationHeader extends TrustMsgHeader {
  */
 export interface TrustChangeOfLocationBody extends TrustMsgBodyBase {
     /** The new calling point of the train. */
-    loc_stanox: `${StanoxCode}`;
+    loc_stanox: StanoxCode;
     /** The original location in the schedule. */
-    original_loc_stanox: `${StanoxCode}`;
+    original_loc_stanox: StanoxCode;
 
     /** When the change of location was entered into TRUST. */
     event_timestamp: UnixEpochMsTimestamp;
@@ -508,3 +523,14 @@ export type TrustMessage =
     | TrustChangeOfOriginMsg
     | TrustChangeOfIdentityMsg
     | TrustChangeOfLocationMsg;
+
+/** A mapping of TRUST message types to their corresponding message interfaces. */
+export type TrustMsgTypeMap = {
+    "0001": TrustCallMsg;
+    "0002": TrustCancellationMsg;
+    "0003": TrustMovementMsg;
+    "0005": TrustReinstatementMsg;
+    "0006": TrustChangeOfOriginMsg;
+    "0007": TrustChangeOfIdentityMsg;
+    "0008": TrustChangeOfLocationMsg;
+};
