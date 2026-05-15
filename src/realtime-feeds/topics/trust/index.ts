@@ -26,6 +26,8 @@ export function parseTrustMessage(rawMessage: RawTrust.TrustMessage): ParsedTrus
 /**
  * Parses a raw message from the TRUST feed into a more usable format.
  *
+ * Note that this uses the `Temporal` API so, on Node versions prior to 26, a polyfill will be needed.
+ *
  * @param rawMessage The raw message object received from the feed.
  * @returns A parsed message object.
  * @throws Error if the input message does not appear to be in the expected format.

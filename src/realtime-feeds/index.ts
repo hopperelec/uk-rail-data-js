@@ -1,4 +1,4 @@
-import {parseTrainDescriberMessage, RawTrainDescriberMsg, TrainDescriberMsg} from "./topics/train-describer";
+import {parseTrainDescriberMessage, RawTD, ParsedTD} from "./topics/train-describer";
 import {parseTrustMessage, RawTrust, ParsedTrust} from "./topics/trust";
 
 /** A subscription to a topic on a Network Rail realtime feed. */
@@ -34,13 +34,13 @@ export abstract class NetworkRailRealtimeClient<SubscriptionOptions> {
      * @see {@link https://wiki.openraildata.com/index.php/TD}
      */
     subscribeToTrainDescriber(
-        onMessage: (message: TrainDescriberMsg) => void,
+        onMessage: (message: ParsedTD.TrainDescriberMsg) => void,
         onError?: (error: unknown) => void,
         options?: SubscriptionOptions,
     ): Promise<NetworkRailRealtimeSubscription> {
         return this.subscribe('TD_ALL_SIG_AREA', rawMessage => {
             // Ignore the top-level keys, which correspond directly to `rawInnerMessage.msg_type`
-            for (const rawInnerMessage of Object.values(rawMessage as Record<string, RawTrainDescriberMsg>)) {
+            for (const rawInnerMessage of Object.values(rawMessage as Record<string, RawTD.TrainDescriberMsg>)) {
                 try {
                     onMessage(parseTrainDescriberMessage(rawInnerMessage));
                 } catch (err) {
