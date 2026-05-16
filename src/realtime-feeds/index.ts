@@ -3,6 +3,7 @@ import {parseTrustMessage, RawTrust, ParsedTrust} from "./topics/trust";
 import {EnvelopedMessage} from "./shared-message-envelope/parsed";
 import {parseTsrMessage, RawTsr, ParsedTsr} from "./topics/tsr";
 import {parseVstpMessage, RawVSTP, ParsedVSTP} from "./topics/vstp";
+import {parseRtppmMessage, RawRTPPM, ParsedRTPPM} from "./topics/rtppm";
 
 /** A subscription to a topic on a Network Rail realtime feed. */
 export interface NetworkRailRealtimeSubscription {
@@ -29,7 +30,8 @@ export abstract class NetworkRailRealtimeClient<SubscriptionOptions> {
     ): Promise<NetworkRailRealtimeSubscription>;
 
     /**
-     * Subscribes to the Train Describer feed, with middleware to parse messages into a more usable format.
+     * Subscribes to the Train Describer feed,
+     *  with middleware to parse messages into a more usable format.
      *
      * @param onMessage Callback invoked for each parsed Train Describer message received.
      * @param onError Optional callback invoked if an error occurs while processing messages. Errors while subscribing or unsubscribing will be thrown as exceptions instead.
@@ -54,7 +56,8 @@ export abstract class NetworkRailRealtimeClient<SubscriptionOptions> {
     }
 
     /**
-     * Subscribes to the TRUST feed, with middleware to parse messages into a more usable format.
+     * Subscribes to the TRUST (Train Movements) feed,
+     *  with middleware to parse messages into a more usable format.
      *
      * @param onMessage Callback invoked for each parsed TRUST message received.
      * @param onError Optional callback invoked if an error occurs while processing messages. Errors while subscribing or unsubscribing will be thrown as exceptions instead.
@@ -77,7 +80,8 @@ export abstract class NetworkRailRealtimeClient<SubscriptionOptions> {
 
     // TODO: This is mostly untested right now because I started writing the code at 0800 on a Friday...
     /**
-     * Subscribes to the Temporary Speed Restriction (TSR) feed, with middleware to parse messages into a more usable format.
+     * Subscribes to the Temporary Speed Restriction (TSR) feed,
+     *  with middleware to parse messages into a more usable format.
      *
      * Messages to this feed are only meant to be published at 0600 on Fridays, with one message for each route group.
      *
@@ -102,7 +106,8 @@ export abstract class NetworkRailRealtimeClient<SubscriptionOptions> {
 
     // TODO: This is mostly untested right now
     /**
-     * Subscribes to the Very Short Term Plan (VSTP) feed, with middleware to parse messages into a more usable format.
+     * Subscribes to the Very Short Term Plan (VSTP) feed,
+     *  with middleware to parse messages into a more usable format.
      *
      * @param onMessage Callback invoked for each parsed VSTP message received.
      * @param onError Optional callback invoked if an error occurs while processing messages. Errors while subscribing or unsubscribing will be thrown as exceptions instead.
@@ -117,6 +122,29 @@ export abstract class NetworkRailRealtimeClient<SubscriptionOptions> {
         return this.subscribe('VSTP_ALL', message => {
             try {
                 onMessage(parseVstpMessage(message as RawVSTP.VstpMessageWrapper));
+            } catch (err) {
+                onError?.(err);
+            }
+        }, onError, options);
+    }
+
+    /**
+     * Subscribes to the Real-Time Public Performance Measure (RTPPM) feed,
+     *  with middleware to parse messages into a more usable format.
+     *
+     * @param onMessage Callback invoked for each parsed RTPPM message received.
+     * @param onError Optional callback invoked if an error occurs while processing messages. Errors while subscribing or unsubscribing will be thrown as exceptions instead.
+     * @param options Subscription options specific to the feed implementation.
+     * @see {@link https://wiki.openraildata.com/index.php/RTPPM}
+     */
+    subscribeToRTPPM(
+        onMessage: (message: EnvelopedMessage<ParsedRTPPM.RtppmData>) => void,
+        onError?: (error: unknown) => void,
+        options?: SubscriptionOptions,
+    ): Promise<NetworkRailRealtimeSubscription> {
+        return this.subscribe('RTPPM_ALL', message => {
+            try {
+                onMessage(parseRtppmMessage(message as RawRTPPM.RtppmMessageWrapper));
             } catch (err) {
                 onError?.(err);
             }

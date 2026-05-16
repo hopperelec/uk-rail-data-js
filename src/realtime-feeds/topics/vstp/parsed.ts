@@ -1,4 +1,4 @@
-import {Headcode, Routing, ScheduleDateString, TIPLOC} from "../../../types";
+import {Headcode, Routing, TIPLOC} from "../../../types";
 import {
     ActivityCode,
     AtocCode,
@@ -142,8 +142,8 @@ export interface VeryShortTermPlan {
     //       so I will need to confirm them by observation.
     /** @example "Create" */
     transactionType: string
-    scheduleStartDate: ScheduleDateString;
-    scheduleEndDate: ScheduleDateString;
+    scheduleStartDate: Temporal.PlainDate;
+    scheduleEndDate: Temporal.PlainDate;
     /** Bitmask for the days of the week the train runs. */
     daysRun: DaysRun;
     /** Whether subject to performance monitoring. */

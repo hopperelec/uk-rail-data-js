@@ -65,7 +65,7 @@ export default class NetworkRailStompClient extends NetworkRailRealtimeClient<St
             message => {
                 if (!message.body) return;
 
-                let messages: unknown;
+                let messages: unknown[];
                 try {
                     messages = JSON.parse(message.body);
                 } catch (err) {
@@ -74,8 +74,7 @@ export default class NetworkRailStompClient extends NetworkRailRealtimeClient<St
                 }
 
                 if (!Array.isArray(messages)) {
-                    onError?.(new Error('Expected STOMP message body to be an array, but got: ' + typeof messages));
-                    return;
+                    messages = [messages];
                 }
 
                 for (const message of messages) {

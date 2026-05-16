@@ -6,6 +6,13 @@ import {parseTrainActivities} from "../../../static/schedule/cif/parser";
 export * as RawVSTP from './raw';
 export * as ParsedVSTP from './parsed';
 
+/**
+ * Parses a time string in the format `"HHMMSS"` into a Temporal.PlainTime object.
+ *
+ * @param timeStr The time string to parse, expected in the format `"HHMMSS"`.
+ * @returns A Temporal.PlainTime object representing the parsed time.
+ * @throws Error if the input string is not in the expected format or contains invalid time components.
+ */
 function parseHHMMSS(timeStr: string): Temporal.PlainTime {
     return new Temporal.PlainTime(
         +timeStr.slice(0, 2),
@@ -15,7 +22,21 @@ function parseHHMMSS(timeStr: string): Temporal.PlainTime {
 }
 
 /**
+ * Parses a date string in the format `"YYYY-MM-DD"` into a Temporal.PlainDate object.
+ *
+ * @param dateStr The date string to parse, expected in the format `"YYYY-MM-DD"`.
+ * @returns A Temporal.PlainDate object representing the parsed date.
+ * @throws Error if the input string is not in the expected format or contains invalid date components.
+ */
+function parseScheduleDate(dateStr: string): Temporal.PlainDate {
+    const [year, month, day] = dateStr.split('-').map(part => +part);
+    return new Temporal.PlainDate(year, month, day);
+}
+
+/**
  * Parses a raw message from the VSTP feed into a more usable format.
+ *
+ * Note that this uses the `Temporal` API so, on Node versions prior to 26, a polyfill will be needed.
  *
  * @param rawMessage The raw message object received from the feed.
  * @returns A parsed, enveloped message object.
@@ -28,8 +49,8 @@ export function parseVstpMessage(rawMessage: RawVSTP.VstpMessageWrapper): Envelo
         rawVstp => ({
             scheduleId: rawVstp.schedule_id,
             transactionType: rawVstp.transaction_type,
-            scheduleStartDate: rawVstp.schedule_start_date,
-            scheduleEndDate: rawVstp.schedule_end_date,
+            scheduleStartDate: parseScheduleDate(rawVstp.schedule_start_date),
+            scheduleEndDate: parseScheduleDate(rawVstp.schedule_end_date),
             daysRun: rawVstp.schedule_days_runs,
             applicableTimetable: rawVstp.applicable_timetable === 'Y',
             bankHolidayRunning: rawVstp.CIF_bank_holiday_running,
