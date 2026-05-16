@@ -9,6 +9,8 @@ import {
 import {getAssociationKey, getScheduleKey} from "../utils";
 import {createReadStream} from "fs";
 import {newDateUk} from "../../../utils";
+import {fetchCIF, ScheduleNrodCredentials, ScheduleType} from "../index";
+import {Readable} from "node:stream";
 
 // #region Helpers
 
@@ -163,12 +165,12 @@ export function parseTrainActivities(activity: string): Set<string> {
  * @param fileStream A readable stream for the CIF file
  * @returns An AsyncIterable of CifStreamRecord objects.
  */
-export async function* cifStream(fileStream: NodeJS.ReadableStream): AsyncIterable<CifStreamRecord> {
+export async function* cifStream(fileStream: AsyncIterable<Uint8Array>): AsyncIterable<CifStreamRecord> {
     let currentSchedule: TrainSchedule | null = null;
     let pendingChangeEnRoute: ChangeEnRouteRecord | null = null;
     let encounteredHeader = false;
 
-    for await (const line of readline.createInterface({ input: fileStream })) {
+    for await (const line of readline.createInterface({ input: Readable.from(fileStream) })) {
         if (line.length < 2) continue;
         const recordId = line.substring(0, 2);
 
@@ -393,6 +395,27 @@ export async function* cifStream(fileStream: NodeJS.ReadableStream): AsyncIterab
  */
 export function cifStreamFromPath(path: string): AsyncIterable<CifStreamRecord> {
     return cifStream(createReadStream(path));
+}
+
+/**
+ * Fetches a CIF file from the Network Rail Open Data API and creates a stream of its records.
+ *
+ * @param credentials The credentials to use for the request.
+ * @param type The type of schedule to request.
+ * @param fetch An optional fetch function to use for making the HTTP request. Defaults to the global fetch.
+ * @returns An AsyncIterable of CifStreamRecord objects.
+ * @throws Error if the HTTP request fails or the response body is not a valid CIF file.
+ */
+export async function cifStreamFromNROD(
+    credentials: ScheduleNrodCredentials,
+    type: ScheduleType,
+    fetch: typeof globalThis.fetch = globalThis.fetch,
+): Promise<AsyncIterable<CifStreamRecord>> {
+    const response = await fetchCIF(credentials, type, fetch);
+    if (!response.ok) throw new Error(`Failed to fetch CIF file: ${response.status} ${response.statusText}`);
+    const fileStream = response.body;
+    if (!fileStream) throw new Error("Response does not contain a body stream.");
+    return cifStream(fileStream.pipeThrough(new DecompressionStream('gzip')));
 }
 
 /**
