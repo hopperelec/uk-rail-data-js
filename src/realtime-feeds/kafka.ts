@@ -116,13 +116,17 @@ export default class NetworkRailKafkaClient extends NetworkRailRealtimeClient<Ne
             messages = JSON.parse(payload.message.value.toString());
         } catch (err) {
             for (const {onError} of subscriptions) {
-                onError?.(new Error('Failed to parse message value', {cause: err}));
+                try {
+                    onError?.(new Error('Failed to parse message value', {cause: err}));
+                } catch {}
             }
             return;
         }
         if (!Array.isArray(messages)) {
             for (const {onError} of subscriptions) {
-                onError?.(new Error('Expected message to be an array, but got: ' + typeof messages));
+                try {
+                    onError?.(new Error('Expected message to be an array, but got: ' + typeof messages));
+                } catch {}
             }
             return;
         }
@@ -132,7 +136,9 @@ export default class NetworkRailKafkaClient extends NetworkRailRealtimeClient<Ne
                 try {
                     subscription.onMessage(message);
                 } catch (err) {
-                    subscription.onError?.(new Error('Error processing message', {cause: err}));
+                    try {
+                        subscription.onError?.(new Error('Error processing message', {cause: err}));
+                    } catch {}
                 }
             }
         }
