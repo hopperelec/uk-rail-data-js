@@ -34,10 +34,10 @@ export function findRefsInSchedules(schedules: Iterable<TrainSchedule>): Unresol
 
     function addCharacteristics(characteristics: TrainCharacteristics) {
         addIf('TCT', characteristics.trainCategory);
-        addIf('BUS', characteristics.portionId);
+        addIf('BUS', characteristics.businessSector);
         addSet('OPC', characteristics.operatingCharacteristics);
-        addIf('SLE', characteristics.sleepers);
-        addIf('RES', characteristics.reservations);
+        addIf('SLE', characteristics.sleeperAccommodation);
+        addIf('RES', characteristics.reservationRequirements);
         addSet('CAT', characteristics.catering);
         addSet('BRA', characteristics.serviceBrandCodes);
     }

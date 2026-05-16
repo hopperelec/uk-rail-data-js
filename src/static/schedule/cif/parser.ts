@@ -4,6 +4,7 @@ import {
     ChangeEnRouteRecord,
     TrainSchedule, CifStreamRecord, PowerType, TrainCharacteristics,
     AssociationCategory, IntermediateLocationRecord, OriginLocationRecord, TerminusLocationRecord, TiplocRecordBase,
+    DaysRun,
 } from './types';
 import {getAssociationKey, getScheduleKey} from "../utils";
 import {createReadStream} from "fs";
@@ -40,6 +41,50 @@ function validateStpIndicator(indicator: string): 'P' | 'O' | 'N' | 'C' {
 }
 
 /**
+ * Parses a time string in HHMM format to a Temporal.PlainTime object.
+ *
+ * @param time The time string to parse.
+ * @returns A Temporal.PlainTime object representing the parsed time.
+ */
+function parseHHMM(time: string): Temporal.PlainTime {
+    return new Temporal.PlainTime(+time.substring(0, 2), +time.substring(2, 4));
+}
+
+/**
+ * Parses a time string in HHMM or HHMM'H' format (where 'H' indicates a half minute) to a Temporal.PlainTime object.
+ *
+ * @param time The time string to parse.
+ * @returns A Temporal.PlainTime object representing the parsed time.
+ */
+function parseHHMMH(time: string): Temporal.PlainTime {
+    return new Temporal.PlainTime(+time.substring(0, 2), +time.substring(2, 4), time.endsWith('H') ? 30 : 0);
+}
+
+/**
+ * Parses a time string in HHMM or HHMM'H' format (where 'H' indicates a half minute) to a Temporal.PlainTime object,
+ *  or returns undefined if the string is entirely whitespace.
+ *
+ * @param time The time string to parse.
+ * @returns A Temporal.PlainTime object representing the parsed time, or undefined.
+ */
+export function parseOptionalHHMM(time: string): Temporal.PlainTime | undefined {
+    if (!time.trim()) return undefined;
+    return parseHHMM(time);
+}
+
+/**
+ * Parses a time string in HHMM or HHMM'H' format (where 'H' indicates a half minute) to a Temporal.PlainTime object,
+ *  or returns undefined if the string is entirely whitespace.
+ *
+ * @param time The time string to parse.
+ * @returns A Temporal.PlainTime object representing the parsed time, or undefined.
+ */
+function parseOptionalHHMMH(time: string): Temporal.PlainTime | undefined {
+    if (!time.trim()) return undefined;
+    return parseHHMMH(time);
+}
+
+/**
  * Parses the train characteristics from a given line of text, starting at a specified index.
  *
  * @param line The line of text containing the train characteristics.
@@ -61,14 +106,14 @@ function parseTrainCharacteristics(line: string, startIndex: number): TrainChara
         trainIdentity: subIndex(2, 6),
         headcode: subIndex(6, 10) || undefined,
         trainServiceCode: +subIndex(11, 19),
-        portionId: subIndex(19, 20) || undefined,
+        businessSector: subIndex(19, 20) || undefined,
         powerType: subIndex(20, 23) as PowerType,
         timingLoad: subIndex(23, 27) || undefined,
         speed: +subIndex(27, 30),
         operatingCharacteristics: new Set(subIndex(30, 36).split('').filter(Boolean)),
         hasFirstClassSeating: seatingClass === 'B',
-        sleepers: subIndex(37, 38) || undefined,
-        reservations: subIndex(38, 39) || undefined,
+        sleeperAccommodation: subIndex(37, 38) || undefined,
+        reservationRequirements: subIndex(38, 39) || undefined,
         catering: new Set(subIndex(40, 44).split('').filter(Boolean)),
         serviceBrandCodes: new Set(subIndex(44, 48).split('').filter(Boolean)),
     }
@@ -99,7 +144,7 @@ function parseTiplocRecordBase(line: string): TiplocRecordBase {
  * @param activity The activity string.
  * @returns A Set of individual activity codes.
  */
-function parseTrainActivities(activity: string): Set<string> {
+export function parseTrainActivities(activity: string): Set<string> {
     const activities = new Set<string>();
     for (let i = 0; i < activity.length; i += 2) {
         const code = activity.substring(i, i + 2).trim();
@@ -112,6 +157,8 @@ function parseTrainActivities(activity: string): Set<string> {
 
 /**
  * Parses a CIF file from the given path, streaming the file contents in and streaming the records out.
+ *
+ * Note that this uses the `Temporal` API so, on Node versions prior to 26, a polyfill will be needed.
  *
  * @param fileStream A readable stream for the CIF file
  * @returns An AsyncIterable of CifStreamRecord objects.
@@ -208,7 +255,7 @@ export async function* cifStream(fileStream: NodeJS.ReadableStream): AsyncIterab
                     associatedTrainUID: line.substring(9, 15).trim(),
                     startDate: line.substring(15, 21).trim(),
                     endDate: line.substring(21, 27).trim(),
-                    daysRun: line.substring(27, 34).trim(),
+                    daysRun: line.substring(27, 34).trim() as DaysRun,
                     category: line.substring(34, 36).trim() as AssociationCategory,
                     dateIndicator,
                     location: line.substring(37, 44).trim(),
@@ -229,7 +276,7 @@ export async function* cifStream(fileStream: NodeJS.ReadableStream): AsyncIterab
                     trainUID: line.substring(3, 9).trim(),
                     dateRunsFrom: line.substring(9, 15).trim(),
                     dateRunsTo: line.substring(15, 21).trim(),
-                    daysRun: line.substring(21, 28).trim(),
+                    daysRun: line.substring(21, 28).trim() as DaysRun,
                     bankHolidayRunning: line.substring(28, 29).trim() || undefined,
                     trainStatus: line.substring(29, 30).trim(),
                     stpIndicator: validateStpIndicator(line.substring(79, 80).trim()),
@@ -265,8 +312,8 @@ export async function* cifStream(fileStream: NodeJS.ReadableStream): AsyncIterab
                 if (currentSchedule) {
                     currentSchedule.originLocation = {
                         location: line.substring(2, 10).trim(),
-                        scheduledDepartureTime: line.substring(10, 15).trim(),
-                        publicDepartureTime: line.substring(15, 19).trim(),
+                        scheduledDepartureTime: parseHHMMH(line.substring(10, 15)),
+                        publicDepartureTime: parseHHMM(line.substring(15, 19)),
                         platform: line.substring(19, 22).trim() || undefined,
                         line: line.substring(22, 25).trim() || undefined,
                         engineeringAllowance: line.substring(25, 27).trim() || undefined,
@@ -280,12 +327,14 @@ export async function* cifStream(fileStream: NodeJS.ReadableStream): AsyncIterab
                 if (currentSchedule) {
                     const li: Omit<IntermediateLocationRecord, "recordType"> = {
                         location: line.substring(2, 10).trim(),
-                        // @ts-ignore I don't know why ts thinks this doesn't exist, but is fine with the other time values
-                        scheduledArrivalTime: line.substring(10, 15).trim() || undefined,
-                        scheduledDepartureTime: line.substring(15, 20).trim() || undefined,
-                        scheduledPassTime: line.substring(20, 25).trim() || undefined,
-                        publicArrivalTime: line.substring(25, 29).trim() || undefined,
-                        publicDepartureTime: line.substring(29, 33).trim() || undefined,
+
+                        // @ts-ignore
+                        scheduledArrivalTime: parseOptionalHHMMH(line.substring(10, 15)),
+                        scheduledDepartureTime: parseOptionalHHMMH(line.substring(15, 20)),
+                        scheduledPassTime: parseOptionalHHMMH(line.substring(20, 25)),
+                        publicArrivalTime: parseOptionalHHMM( line.substring(25, 29)),
+                        publicDepartureTime: parseOptionalHHMM(line.substring(29, 33)),
+
                         platform: line.substring(33, 36).trim() || undefined,
                         line: line.substring(36, 39).trim() || undefined,
                         path: line.substring(39, 42).trim() || undefined,
@@ -314,8 +363,8 @@ export async function* cifStream(fileStream: NodeJS.ReadableStream): AsyncIterab
                 if (currentSchedule) {
                     currentSchedule.terminatingLocation = {
                         location: line.substring(2, 10).trim(),
-                        scheduledArrivalTime: line.substring(10, 15).trim(),
-                        publicArrivalTime: line.substring(15, 19).trim(),
+                        scheduledArrivalTime: parseHHMMH(line.substring(10, 15)),
+                        publicArrivalTime: parseHHMM(line.substring(15, 19)),
                         platform: line.substring(19, 22).trim() || undefined,
                         path: line.substring(22, 25).trim() || undefined,
                         activities: parseTrainActivities(line.substring(25, 37).trim()),
@@ -348,6 +397,8 @@ export function cifStreamFromPath(path: string): AsyncIterable<CifStreamRecord> 
 
 /**
  * Consumes a CIF file and returns the entire dataset as a single object.
+ *
+ * Note that this uses the `Temporal` API so, on Node versions prior to 26, a polyfill will be needed.
  *
  * @param stream An AsyncIterable of CifStreamRecord objects.
  * @returns A promise that resolves with the complete CifData object.

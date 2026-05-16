@@ -109,35 +109,6 @@ export interface TemporarySpeedRestriction {
  * @see {@link https://wiki.openraildata.com/index.php/TSR}
  */
 export interface TsrBatchMsg {
-    /** @example "Network Rail" */
-    owner: string;
-    /** When the message was generated. */
-    timestamp: Date;
-    /** @example "2015-02-02T09:18:23.718+00:00-9PPS" */
-    originMsgId: string;
-    /** @example "industry" */
-    classification: string;
-    /** @example "Production" */
-    systemEnvironmentCode: string;
-
-    sender: {
-        /** @example "Network Rail" */
-        organisation: string;
-        /** @example "HUB" */
-        application: string;
-        /** @example "net" */
-        applicationDomain: string;
-        instance: string;
-        component: string;
-        userId: string;
-        sessionId: string;
-        conversationId: string;
-        messageId: string;
-    };
-
-    /** @example "TSR/9" */
-    topicId: string;
-
     /** Name of the route group these TSRs belong to. */
     routeGroup: RouteGroupName;
     /** Numeric code of the route group. */

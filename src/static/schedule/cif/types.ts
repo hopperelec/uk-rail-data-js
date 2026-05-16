@@ -1,6 +1,6 @@
-// #region Core
+import {Headcode, Routing, TIPLOC} from "../../../types";
 
-import {Routing, TIPLOC} from "../../../types";
+// #region Core
 
 /** A unique identifier for a train schedule. */
 export type ScheduleKey = string;
@@ -21,6 +21,41 @@ export type TrainUID = string;
  * @see {@link https://wiki.openraildata.com/index.php/TrainServiceCode}
  */
 export type TrainServiceCode = number;
+
+/**
+ * A 4-character code indicating the timing load characteristics of the train, affecting its performance calculations.
+ *
+ * Diesel Mechanical Multiple Units (Air Brake):
+ * - A: Class 14x series 2-axle
+ * - E: Class 158, 168, 170, 172, 175
+ * - N: Class 165
+ * - S: Class 150, 153, 155 or 156
+ * - T: Class 165/1 or 166
+ * - V: Class 220/221; Bombardier DMU
+ * - X: Class 159
+ *
+ * DMU/DPU Power Weight Codes:
+ * - D1: Power car + trailer
+ * - D2: 2 power cars + trailer
+ * - D3: Power twin
+ *
+ * EMU Codes:
+ * Up to three-numerics (0 - 999) usually indicating the specific type of EMU (e.g. 321, 315).
+ * There are occasional exceptions to this rule.
+ *
+ * Hauled Train (D, E or ED) Planned Load.
+ * 1-9999: Load in Tonnes (1-999 only with ED).
+ */
+export type TimingLoadCode = string;
+
+/** A single character representing a binary value. */
+export type Bit = '0' | '1';
+
+/**
+ * 7-character string representing the days of the week (Mon-Sun) a train runs,
+ *  where a 1 indicates it runs on that day.
+ */
+export type DaysRun = `${Bit}${Bit}${Bit}${Bit}${Bit}${Bit}${Bit}`;
 
 /** A complete, parsed Common Interface File, held in memory. */
 export interface CifData {
@@ -57,16 +92,13 @@ export interface TrainSchedule {
 
 /** Characteristics that define the nature and capabilities of a train. */
 export interface TrainCharacteristics {
-    /**
-     * Two-character code for the train category.
-     * These are defined in the BPLAN file as TCT references.
-     */
-    trainCategory: string;
+    /** The category of the train. */
+    trainCategory: TrainCategory;
     /**
      * Train Identity, also known as the headcode (e.g., '2I04'). This is the reporting number used in operations.
      * Not to be confused with the NRS Headcode.
      */
-    trainIdentity: string;
+    trainIdentity: Headcode;
     /**
      * National Reservation System (NRS) headcode, designated by train operator.
      * Not to be confused with the train identity, which is also known as the headcode.
@@ -74,67 +106,26 @@ export interface TrainCharacteristics {
     headcode?: string;
     /** Service code for this train. */
     trainServiceCode: TrainServiceCode;
-    /**
-     * Portion ID or Business Sector (BUSSEC), used to identify parts of a train in joining/splitting services.
-     * These are defined in the BPLAN file as BUS references.
-     */
-    portionId?: string;
+    /** The business sector or portion ID for the train, if applicable. */
+    businessSector?: BusinessSector;
     /** The power type of the train. */
     powerType: PowerType;
-    /**
-     * The timing load characteristics of the train, affecting its performance calculations.
-     *
-     * Diesel Mechanical Multiple Units (Air Brake):
-     * - A: Class 14x series 2-axle
-     * - E: Class 158, 168, 170, 172, 175
-     * - N: Class 165
-     * - S: Class 150, 153, 155 or 156
-     * - T: Class 165/1 or 166
-     * - V: Class 220/221; Bombardier DMU
-     * - X: Class 159
-     *
-     * DMU/DPU Power Weight Codes:
-     * - D1: Power car + trailer
-     * - D2: 2 power cars + trailer
-     * - D3: Power twin
-     *
-     * EMU Codes:
-     * Up to three-numerics (0 - 999) usually indicating the specific type of EMU (e.g. 321, 315).
-     * There are occasional exceptions to this rule.
-     *
-     * Hauled Train (D, E or ED) Planned Load.
-     * 1-9999: Load in Tonnes (1-999 only with ED).
-     */
-    timingLoad?: string;
+    /** The timing load code of the train, if applicable. */
+    timingLoad?: TimingLoadCode;
     /** The planned maximum speed of the train in MPH. */
     speed: number;
-    /**
-     * A set of up to 6 operating characteristic codes that describe the train's features.
-     * These are defined in the BPLAN file as OPC references.
-     */
-    operatingCharacteristics: Set<string>;
+    /** A set of up to 6 operating characteristic codes that describe the train's features. */
+    operatingCharacteristics: Set<OperatingCharacteristic>;
     /** Indicates if the train has first class seating. */
     hasFirstClassSeating: boolean;
-    /**
-     * Sleeper accommodation type, if any.
-     * These are defined in the BPLAN file as SLE references.
-     */
-    sleepers?: string;
-    /**
-     * 1-character code indicating the reservation reequirements for the train, if any.
-     * These are defined in the BPLAN file as RES references.
-     */
-    reservations?: string;
-    /**
-     * A set of up to 4 catering codes that describe the catering services available on the train.
-     * These are defined in the BPLAN file as CAT references.
-     */
-    catering: Set<string>;
-    /**
-     * Service branding associated with the train (e.g., 'E' for Eurostar).
-     * These are defined in the BPLAN file as BRA references.
-     */
-    serviceBrandCodes: Set<string>;
+    /** The train's sleeper accommodation type, if any. */
+    sleeperAccommodation?: SleeperAccommodationCode;
+    /** The reservation requirements for the train, if any. */
+    reservationRequirements?: ReservationRequirementCode;
+    /** A set of up to 4 catering codes that describe the catering services available on the train. */
+    catering: Set<CateringCode>;
+    /** A set of up to 4 service brand codes associated with the train. */
+    serviceBrandCodes: Set<ServiceBrandCode>;
 }
 
 /** Any top-level logical record that can be yielded by the streaming parser. */
@@ -196,6 +187,78 @@ export type AssociationDateIndicator = 'S' | 'N' | 'P';
 
 // #endregion
 
+// #region BPLAN references
+
+/**
+ * Business Sector (BUSSEC) or Portion ID,
+ *  a 1-character code identifying a part of a train in joining/splitting services.
+ * These are defined in the BPLAN file as BUS references.
+ */
+export type BusinessSector = string;
+
+/**
+ * 1-character code indicating an operating characteristic of a train.
+ * These are defined in the BPLAN file as OPC references.
+ */
+export type OperatingCharacteristic = string;
+
+/**
+ * 2-character code for a train's category.
+ * These are defined in the BPLAN file as TCT references.
+ */
+export type TrainCategory = string;
+
+/**
+ * 1-character code indicating a train's sleeper accommodation type.
+ * These are defined in the BPLAN file as SLE references.
+ */
+export type SleeperAccommodationCode = string;
+
+/**
+ * 1-character code indicating the reservation requirements for a train.
+ * These are defined in the BPLAN file as RES references.
+ */
+export type ReservationRequirementCode = string;
+
+/**
+ * 1-character code indicating the catering services available on a train.
+ * These are defined in the BPLAN file as CAT references.
+ */
+export type CateringCode = string;
+
+/**
+ * 1-character code indicating a service brand associated with a train (e.g., 'E' for Eurostar).
+ * These are defined in the BPLAN file as BRA references.
+ */
+export type ServiceBrandCode = string;
+
+/**
+ * 1-character code indicating which bank holidays a train doesn't run on.
+ * These are defined in the BPLAN file as BHX references.
+ */
+export type BankHolidayRunning = string;
+
+/**
+ * 1-character code indicating the publication status of a train.
+ * These are defined in the BPLAN file as TST references.
+ */
+export type TrainStatus = string;
+
+/**
+ * 2-character code devised by the Association of Train Operating Companies (ATOC)
+ *  to identify the operator of a train service.
+ * These are defined in the BPLAN file as TOC references.
+ */
+export type AtocCode = string;
+
+/**
+ * 2-character code indicating something a train does at a specific location.
+ * These are defined in the BPLAN file as ACT references.
+ */
+export type ActivityCode = string;
+
+// #endregion
+
 // #region Individual record types
 
 /**
@@ -239,18 +302,12 @@ export interface BasicScheduleRecord extends TrainCharacteristics {
     dateRunsFrom: string;
     /** The last date this schedule is valid until, in YYMMDD format. */
     dateRunsTo: string;
-    /** Bitmask for the days of the week (Mon-Sun) the train runs, where 1 indicates it runs. */
-    daysRun: string;
-    /**
-     * 1-character code indicating which bank holidays the train doesn't run on, if any.
-     * These are defined in the BPLAN file as BHX references.
-     */
-    bankHolidayRunning?: string;
-    /**
-     * 1-character code indicating the publication status of the train.
-     * These are defined in the BPLAN file as TST references.
-     */
-    trainStatus: string;
+    /** Bitmask for the days of the week the train runs. */
+    daysRun: DaysRun;
+    /** Which bank holidays the train doesn't run on, if any. */
+    bankHolidayRunning?: BankHolidayRunning;
+    /** The publication status of the train. */
+    trainStatus: TrainStatus;
     /** Short Term Plan (STP) indicator. */
     stpIndicator: StpIndicator;
 }
@@ -267,12 +324,8 @@ export interface BasicScheduleExtraDetailsRecord {
      * for services running via the Channel Tunnel.
      */
     uicCode?: number;
-    /**
-     * Two-character code devised by the Association of Train Operating Companies (ATOC)
-     * to identify the operator of the train service.
-     * These are defined in the BPLAN file as TOC references.
-     */
-    atocCode: string;
+    /** The ATOC code for the train operator. */
+    atocCode: AtocCode;
     /** Whether subject to performance monitoring. */
     applicableTimetableSchedule: boolean;
 }
@@ -301,11 +354,8 @@ interface LocationRecordBase {
     /** The path the train uses on arrival. */
     path?: Routing;
 
-    /**
-     * A set of up to 6 activity codes describing what the train does at this location.
-     * These are defined in the BPLAN file as ACT references.
-     */
-    activities: Set<string>;
+    /** A set of up to 6 activity codes describing what the train does at this location. */
+    activities: Set<ActivityCode>;
 
     /** Engineering allowance, a buffer time for potential engineering work delays. */
     engineeringAllowance?: string;
@@ -318,20 +368,20 @@ interface LocationRecordBase {
     changeEnRoute?: Omit<ChangeEnRouteRecord, 'recordType' | 'location'>;
 }
 
-/**  A location record with a schedules arrival time. */
+/** A location record with a scheduled arrival time. */
 export interface ArrivalLocationRecord extends LocationRecordBase {
-    /** Scheduled arrival time, in HHMM format with an optional 'H' suffix for a half-minute. */
-    scheduledArrivalTime: string;
-    /** Public arrival time, in HHMM format. */
-    publicArrivalTime: string;
+    /** Scheduled arrival time, accurate to the half-minute. */
+    scheduledArrivalTime: Temporal.PlainTime;
+    /** Scheduled arrival time, accurate to the minute. */
+    publicArrivalTime: Temporal.PlainTime;
 }
 
 /** A location record with a scheduled departure time. */
 export interface DepartureLocationRecord extends LocationRecordBase {
-    /** Scheduled departure time, in HHMM format with an optional 'H' suffix for a half-minute. */
-    scheduledDepartureTime: string;
-    /** Public departure time, in HHMM format. */
-    publicDepartureTime: string;
+    /** Scheduled departure time, accurate to the half-minute. */
+    scheduledDepartureTime: Temporal.PlainTime;
+    /** Scheduled departure time, accurate to the minute. */
+    publicDepartureTime: Temporal.PlainTime;
 }
 
 /**
@@ -351,8 +401,8 @@ export interface NormalIntermediateLocationRecord extends ArrivalLocationRecord,
 /** Intermediate Location (LI) record for a passing point without stopping. */
 export interface PassIntermediateLocationRecord extends LocationRecordBase {
     recordType: 'LI';
-    /** Scheduled pass time, in HHMM format with an optional 'H' suffix for a half-minute. */
-    scheduledPassTime: string;
+    /** Scheduled pass time, accurate to the half-minute. */
+    scheduledPassTime: Temporal.PlainTime;
 }
 
 /**
@@ -413,8 +463,8 @@ export interface AssociationRecord {
     startDate: string;
     /** The last date the association is valid until, in YYMMDD format. */
     endDate: string;
-    /** Bitmask for the days of the week (Mon-Sun) the association runs, where 1 indicates it runs. */
-    daysRun: string;
+    /** Bitmask for the days of the week the train runs. */
+    daysRun: DaysRun;
     /** The category of the association. */
     category: AssociationCategory;
     /** Indicates if the association occurs on the same day, next day, or previous day. */

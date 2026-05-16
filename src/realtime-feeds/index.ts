@@ -1,6 +1,8 @@
 import {parseTrainDescriberMessage, RawTD, ParsedTD} from "./topics/train-describer";
 import {parseTrustMessage, RawTrust, ParsedTrust} from "./topics/trust";
+import {EnvelopedMessage} from "./shared-message-envelope/parsed";
 import {parseTsrMessage, RawTsr, ParsedTsr} from "./topics/tsr";
+import {parseVstpMessage, RawVSTP, ParsedVSTP} from "./topics/vstp";
 
 /** A subscription to a topic on a Network Rail realtime feed. */
 export interface NetworkRailRealtimeSubscription {
@@ -85,13 +87,36 @@ export abstract class NetworkRailRealtimeClient<SubscriptionOptions> {
      * @see {@link https://wiki.openraildata.com/index.php/TSR}
      */
     subscribeToTSRs(
-        onMessage: (message: ParsedTsr.TsrBatchMsg) => void,
+        onMessage: (message: EnvelopedMessage<ParsedTsr.TsrBatchMsg>) => void,
         onError?: (error: unknown) => void,
         options?: SubscriptionOptions,
     ): Promise<NetworkRailRealtimeSubscription> {
         return this.subscribe('TSR_ALL_ROUTE', message => {
             try {
                 onMessage(parseTsrMessage(message as RawTsr.TsrMessageWrapper));
+            } catch (err) {
+                onError?.(err);
+            }
+        }, onError, options);
+    }
+
+    // TODO: This is mostly untested right now
+    /**
+     * Subscribes to the Very Short Term Plan (VSTP) feed, with middleware to parse messages into a more usable format.
+     *
+     * @param onMessage Callback invoked for each parsed VSTP message received.
+     * @param onError Optional callback invoked if an error occurs while processing messages. Errors while subscribing or unsubscribing will be thrown as exceptions instead.
+     * @param options Subscription options specific to the feed implementation.
+     * @see {@link https://wiki.openraildata.com/index.php/VSTP}
+     */
+    subscribeToVSTPs(
+        onMessage: (message: EnvelopedMessage<ParsedVSTP.VeryShortTermPlan>) => void,
+        onError?: (error: unknown) => void,
+        options?: SubscriptionOptions,
+    ): Promise<NetworkRailRealtimeSubscription> {
+        return this.subscribe('VSTP_ALL', message => {
+            try {
+                onMessage(parseVstpMessage(message as RawVSTP.VstpMessageWrapper));
             } catch (err) {
                 onError?.(err);
             }

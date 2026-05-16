@@ -38,6 +38,28 @@ function padStart(str: string | number | undefined, len: number) {
 }
 
 /**
+ * Formats a Temporal.PlainTime object into a string in HHMM format.
+ *
+ * @param time The Temporal.PlainTime object to format.
+ * @returns The time in HHMM format.
+ */
+function formatHHMM(time?: Temporal.PlainTime) {
+    if (!time) return ''.padEnd(4, ' ');
+    return padStart(time.hour, 2) + padStart(time.minute, 2);
+}
+
+/**
+ * Formats a Temporal.PlainTime object into a string in HHMM format, with an optional H if seconds are non-zero.
+ *
+ * @param time The Temporal.PlainTime object to format.
+ * @returns The time in HHMM or HHMM'H' format, depending on whether seconds are zero.
+ */
+function formatHHMMH(time?: Temporal.PlainTime) {
+    if (!time) return ''.padEnd(5, ' ');
+    return formatHHMM(time) + (time.second ? 'H' : ' ');
+}
+
+/**
  * Formats a set of codes into a fixed-width string for the CIF format.
  *
  * @param codes The set of codes to format.
@@ -90,14 +112,14 @@ export async function generate(inputStream: AsyncIterable<CifStreamRecord>, outp
                     padEnd(basicSchedule.headcode, 4) +
                     '1' + // Course Indicator (deprecated)
                     padEnd(basicSchedule.trainServiceCode, 8) +
-                    padEnd(basicSchedule.portionId, 1) +
+                    padEnd(basicSchedule.businessSector, 1) +
                     padEnd(basicSchedule.powerType, 3) +
                     padEnd(basicSchedule.timingLoad, 4) +
                     padEnd(basicSchedule.speed, 3) +
                     formatCodeSet(basicSchedule.operatingCharacteristics, 1, 6) +
                     (basicSchedule.hasFirstClassSeating ? 'B' : 'S') +
-                    padEnd(basicSchedule.sleepers, 1) +
-                    padEnd(basicSchedule.reservations, 1) +
+                    padEnd(basicSchedule.sleeperAccommodation, 1) +
+                    padEnd(basicSchedule.reservationRequirements, 1) +
                     ' ' + // Connection Indicator (deprecated)
                     formatCodeSet(basicSchedule.catering, 1, 4) +
                     formatCodeSet(basicSchedule.serviceBrandCodes, 1, 4) +
@@ -121,8 +143,8 @@ export async function generate(inputStream: AsyncIterable<CifStreamRecord>, outp
                 lines.push(
                     'LO' +
                     padEnd(originLocation.location, 8) +
-                    padEnd(originLocation.scheduledDepartureTime, 5) +
-                    padEnd(originLocation.publicDepartureTime, 4) +
+                    formatHHMMH(originLocation.scheduledDepartureTime) +
+                    formatHHMM(originLocation.publicDepartureTime) +
                     padEnd(originLocation.platform, 3) +
                     padEnd(originLocation.line, 3) +
                     padEnd(originLocation.engineeringAllowance, 2) +
@@ -142,14 +164,14 @@ export async function generate(inputStream: AsyncIterable<CifStreamRecord>, outp
                             padEnd(cr.headcode, 4) +
                             '1' + // Course Indicator (deprecated)
                             padEnd(cr.trainServiceCode, 8) +
-                            padEnd(cr.portionId, 1) +
+                            padEnd(cr.businessSector, 1) +
                             padEnd(cr.powerType, 3) +
                             padEnd(cr.timingLoad, 4) +
                             padEnd(cr.speed, 3) +
                             formatCodeSet(cr.operatingCharacteristics, 1, 6) +
                             (cr.hasFirstClassSeating ? 'B' : 'S') +
-                            padEnd(cr.sleepers, 1) +
-                            padEnd(cr.reservations, 1) +
+                            padEnd(cr.sleeperAccommodation, 1) +
+                            padEnd(cr.reservationRequirements, 1) +
                             ' ' + // Connection Indicator (deprecated)
                             formatCodeSet(cr.catering, 1, 4) +
                             formatCodeSet(cr.serviceBrandCodes, 1, 4) +
@@ -160,11 +182,11 @@ export async function generate(inputStream: AsyncIterable<CifStreamRecord>, outp
                     }
 
                     // For type safety, since these are mutually exclusive
-                    let scheduledArrivalTime: string | undefined;
-                    let scheduledDepartureTime: string | undefined;
-                    let scheduledPassTime: string | undefined;
-                    let publicArrivalTime: string | undefined;
-                    let publicDepartureTime: string | undefined;
+                    let scheduledArrivalTime: Temporal.PlainTime | undefined;
+                    let scheduledDepartureTime: Temporal.PlainTime | undefined;
+                    let scheduledPassTime: Temporal.PlainTime | undefined;
+                    let publicArrivalTime: Temporal.PlainTime | undefined;
+                    let publicDepartureTime: Temporal.PlainTime | undefined;
                     if ('scheduledPassTime' in li) {
                         const pil = li as PassIntermediateLocationRecord;
                         scheduledPassTime = pil.scheduledPassTime;
@@ -178,11 +200,11 @@ export async function generate(inputStream: AsyncIterable<CifStreamRecord>, outp
 
                     return 'LI' +
                         padEnd(li.location, 8) +
-                        padEnd(scheduledArrivalTime, 5) +
-                        padEnd(scheduledDepartureTime, 5) +
-                        padEnd(scheduledPassTime, 5) +
-                        padEnd(publicArrivalTime, 4) +
-                        padEnd(publicDepartureTime, 4) +
+                        formatHHMMH(scheduledArrivalTime) +
+                        formatHHMM(scheduledDepartureTime) +
+                        formatHHMMH(scheduledPassTime) +
+                        formatHHMMH(publicArrivalTime) +
+                        formatHHMM(publicDepartureTime) +
                         padEnd(li.platform, 3) +
                         padEnd(li.line, 3) +
                         padEnd(li.path, 3) +
@@ -195,8 +217,8 @@ export async function generate(inputStream: AsyncIterable<CifStreamRecord>, outp
                 lines.push(
                     'LT' +
                     padEnd(terminatingLocation.location, 8) +
-                    padEnd(terminatingLocation.scheduledArrivalTime, 5) +
-                    padEnd(terminatingLocation.publicArrivalTime, 4) +
+                    formatHHMMH(terminatingLocation.scheduledArrivalTime) +
+                    formatHHMM(terminatingLocation.publicArrivalTime) +
                     padEnd(terminatingLocation.platform, 3) +
                     padEnd(terminatingLocation.path, 3) +
                     formatCodeSet(terminatingLocation.activities, 2, 6) +

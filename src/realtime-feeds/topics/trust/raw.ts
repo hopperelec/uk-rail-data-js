@@ -1,5 +1,5 @@
 import {StpIndicator, TrainServiceCode, TrainUID} from "../../../static/schedule/cif";
-import {UnixEpochMsTimestamp, StanoxCode, Routing} from "../../../types";
+import {UnixEpochMsTimestamp, StanoxCode, Routing, ScheduleDateString} from "../../../types";
 
 // #region Core
 
@@ -25,13 +25,6 @@ import {UnixEpochMsTimestamp, StanoxCode, Routing} from "../../../types";
  * @see {@link https://wiki.openraildata.com/index.php/Call_Code}
  */
 export type TrustTrainId = string;
-
-/**
- * Date as a string in the form YYYY-MM-DD
- *
- * @example "2019-12-21"
- */
-export type ScheduleDate = string;
 
 /** 2-digit numeric code uniquely identifying the Train Operating Company (TOC) that operates the train service. */
 export type TocId = `${number}`;
@@ -134,9 +127,9 @@ export interface TrustCallBody extends TrustMsgBodyBase {
     d1266_record_number: `${number}`;
 
     /** Start date of the schedule */
-    schedule_start_date: ScheduleDate;
+    schedule_start_date: ScheduleDateString;
     /** End date of the schedule. */
-    schedule_end_date: ScheduleDate;
+    schedule_end_date: ScheduleDateString;
     /** Train identity (headcode) and TSPEED value. */
     schedule_wtt_id: string;
     schedule_type: StpIndicator;
@@ -154,7 +147,7 @@ export interface TrustCallBody extends TrustMsgBodyBase {
      *  start their journey between 0001 and 0200 the next day during daylight savings.
      * To work around this, it is recommended to use the date in the origin_dep_timestamp field.
      */
-    tp_origin_timestamp: ScheduleDate;
+    tp_origin_timestamp: ScheduleDateString;
     /** When the train was originally created in TRUST. */
     creation_timestamp: UnixEpochMsTimestamp;
     /** When the train is scheduled to start its journey according to the WTT. */

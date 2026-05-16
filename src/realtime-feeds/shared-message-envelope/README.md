@@ -1,0 +1,1 @@
+This package contains type definitions and a parser for the message envelope shared between Network Rail's topics for TSRs, VSTPs and RTPPMs.

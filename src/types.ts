@@ -35,3 +35,17 @@ export type UnixEpochMsTimestamp = `${number}`;
  * @example "1", "2A", "UF"
  */
 export type Routing = string;
+
+/**
+ * Date as a string in the form YYYY-MM-DD
+ *
+ * @example "2019-12-21"
+ */
+export type ScheduleDateString = `${number}-${number}-${number}`;
+
+/**
+ * Headcode of a train, also known as the train identity (e.g., '2I04').
+ * This is the reporting number used in operations.
+ * Not to be confused with the NRS Headcode.
+ */
+export type Headcode = string;

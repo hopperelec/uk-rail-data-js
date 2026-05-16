@@ -1,12 +1,12 @@
 import {StpIndicator, TrainServiceCode, TrainUID} from "../../../static/schedule/cif";
-import {StanoxCode, Routing} from "../../../types";
+import {StanoxCode, Routing, Headcode} from "../../../types";
 
 // #region Core
 
 /** The parts of a TRUST train ID, extracted from the value of a `TrustTrainId` instance. */
 type TrustTrainIdParts = {
     originStanoxArea: string;
-    headcode: string;
+    headcode: Headcode;
     tspeed: string;
     callCode: string;
     day: number;
@@ -110,7 +110,7 @@ export class TrustTrainId {
      * @returns The headcode.
      * @throws Error if the train ID does not match the expected pattern.
      */
-    get headcode(): string {
+    get headcode(): Headcode {
         return this.parts().headcode;
     }
 

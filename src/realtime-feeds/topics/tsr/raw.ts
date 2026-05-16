@@ -1,4 +1,5 @@
 import { UnixEpochMsTimestamp } from "../../../types";
+import {EnvelopedMessage} from "../../shared-message-envelope/raw";
 
 /** Name of a route group. */
 export type RouteGroupName =
@@ -106,77 +107,38 @@ export interface TemporarySpeedRestriction {
 }
 
 /**
- * Current TSR batch message payload.
+ * Batch of TSRs.
  *
  * @see {@link https://wiki.openraildata.com/index.php/TSR}
  */
 export interface TsrBatchMsg {
-    /** @example "http://xml.hiav.networkrail.co.uk/schema/net/tsr/1 net_tsr_messaging_v1.xsd" */
-    schemaLocation: string;
-    /** @example "Network Rail" */
-    owner: string;
-    /** When the message was generated. */
-    timestamp: UnixEpochMsTimestamp;
-    /** @example "2015-02-02T09:18:23.718+00:00-9PPS" */
-    originMsgId: string;
-    /** @example "industry" */
-    classification: string;
-    /** @example "Production" */
-    systemEnvironmentCode: string;
+    /** Name of the route group these TSRs belong to. */
+    routeGroup: RouteGroupName;
+    /** Numeric code of the route group. */
+    routeGroupCode: `${number}`;
+    /**
+     * Identifier of Weekly Operating Notice.
+     *
+     * @example "WON_1415_46_F"
+     */
+    publishSource: string;
+    /** @example "full" */
+    routeGroupCoverage: string;
+    /** @example "publishWON" */
+    batchPublishEvent: string;
 
-    Sender: {
-        /** @example "Network Rail" */
-        organisation: string;
-        /** @example "HUB" */
-        application: string;
-        /** @example "net" */
-        applicationDomain: string;
-        instance: string;
-        component: string;
-        userID: string;
-        sessionID: string;
-        conversationID: string;
-        messageID: string;
-    };
+    /** When the Weekly Operating Notice was published. */
+    publishDate: UnixEpochMsTimestamp;
+    /** Start of the Weekly Operating Notice period. */
+    WONStartDate: UnixEpochMsTimestamp;
+    /** End of the Weekly Operating Notice period. */
+    WONEndDate: UnixEpochMsTimestamp;
 
-    Publication: {
-        /** @example "TSR/9" */
-        TopicID: string;
-    };
-
-    TSRBatchMsg: {
-        /** Name of the route group these TSRs belong to. */
-        routeGroup: RouteGroupName;
-        /** Numeric code of the route group. */
-        routeGroupCode: `${number}`;
-        /**
-         * Identifier of Weekly Operating Notice.
-         *
-         * @example "WON_1415_46_F"
-         */
-        publishSource: string;
-        /** @example "full" */
-        routeGroupCoverage: string;
-        /** @example "publishWON" */
-        batchPublishEvent: string;
-
-        /** When the Weekly Operating Notice was published. */
-        publishDate: UnixEpochMsTimestamp;
-        /** Start of the Weekly Operating Notice period. */
-        WONStartDate: UnixEpochMsTimestamp;
-        /** End of the Weekly Operating Notice period. */
-        WONEndDate: UnixEpochMsTimestamp;
-
-        /** All TSRs in this batch. */
-        tsr: TemporarySpeedRestriction[];
-    };
+    /** All TSRs in this batch. */
+    tsr: TemporarySpeedRestriction[];
 }
 
-/**
- * The raw message wrapper for the TSR feed.
- *
- * @see {@link https://wiki.openraildata.com/index.php/TSR}
- */
+/** The raw message wrapper for the TSR feed. */
 export interface TsrMessageWrapper {
-    TSRBatchMsgV1: TsrBatchMsg;
+    TSRBatchMsgV1: EnvelopedMessage<'TSRBatchMsg', TsrBatchMsg>;
 }
