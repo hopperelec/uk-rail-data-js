@@ -61,7 +61,7 @@ export default class NetworkRailKafkaClient extends NetworkRailRealtimeClient<Ne
      * @param topic The topic to subscribe to.
      * @param onMessage Callback invoked for each message received on the topic.
      * @param onError Optional callback invoked if an error occurs while processing messages. Errors while subscribing or unsubscribing will be thrown as exceptions instead.
-     * @param options Subscription options specific to KafkaJS (currently, this is just `fromBeginning`).
+     * @param options Subscription options specific to KafkaJS (currently, this is just `fromBeginning`). Note that this has no effect if there are already active subscriptions for the topic.
      *
      * @returns
      * A promise that resolves to a NetworkRailRealtimeSubscription, which can be used to unsubscribe from the topic.
