@@ -390,6 +390,8 @@ export async function* cifStream(fileStream: AsyncIterable<Uint8Array>): AsyncIt
 /**
  * Creates a CIF stream from a file path.
  *
+ * Note that this uses the `Temporal` API so, on Node versions prior to 26, a polyfill will be needed.
+ *
  * @param path The path to the CIF file.
  * @returns An AsyncIterable of CifStreamRecord objects.
  */
@@ -399,6 +401,8 @@ export function cifStreamFromPath(path: string): AsyncIterable<CifStreamRecord> 
 
 /**
  * Fetches a CIF file from the Network Rail Open Data API and creates a stream of its records.
+ *
+ * Note that this uses the `Temporal` API so, on Node versions prior to 26, a polyfill will be needed.
  *
  * @param credentials The credentials to use for the request.
  * @param type The type of schedule to request.
