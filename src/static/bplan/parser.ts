@@ -34,7 +34,7 @@ function parseDate(dateStr: string): Date {
     }
 
     try {
-        return newDateUk(year, month - 1, day, hour, minute, second)
+        return newDateUk(year, month, day, hour, minute, second)
     } catch (error) {
         throw new Error(`Invalid date value in '${dateStr}': ${error}`);
     }

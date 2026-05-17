@@ -191,7 +191,7 @@ export async function* cifStream(fileStream: AsyncIterable<Uint8Array>): AsyncIt
                     // Specification claims date should be in yymmdd format,
                     //  but I've found it in ddmmyy format instead.
                     2000 + +line.substring(26, 28),
-                    +line.substring(24, 26) - 1,
+                    +line.substring(24, 26),
                     +line.substring(22, 24),
                     +line.substring(28, 30),
                     +line.substring(30, 32)
