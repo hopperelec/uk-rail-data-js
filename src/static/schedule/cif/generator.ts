@@ -153,7 +153,7 @@ export async function generate(inputStream: AsyncIterable<CifStreamRecord>, outp
                     padEnd(originLocation.performanceAllowance, 2) +
                     ''.padEnd(37, ' ')
                 );
-                intermediateLocations.forEach(li => {
+                for (const li of intermediateLocations) {
                     if(li.changeEnRoute){
                         const cr = li.changeEnRoute;
                         lines.push(
@@ -198,7 +198,8 @@ export async function generate(inputStream: AsyncIterable<CifStreamRecord>, outp
                         publicDepartureTime = nil.publicDepartureTime;
                     }
 
-                    return 'LI' +
+                    lines.push(
+                        'LI' +
                         padEnd(li.location, 8) +
                         formatHHMMH(scheduledArrivalTime) +
                         formatHHMM(scheduledDepartureTime) +
@@ -212,8 +213,9 @@ export async function generate(inputStream: AsyncIterable<CifStreamRecord>, outp
                         padEnd(li.engineeringAllowance, 2) +
                         padEnd(li.pathingAllowance, 2) +
                         padEnd(li.performanceAllowance, 2) +
-                        ''.padEnd(20, ' ');
-                });
+                        ''.padEnd(20, ' ')
+                    );
+                }
                 lines.push(
                     'LT' +
                     padEnd(terminatingLocation.location, 8) +
