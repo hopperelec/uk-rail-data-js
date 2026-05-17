@@ -96,8 +96,11 @@ export async function* merge(
 
             const amendRecord = tiplocsToAmend.get(record.tiplocCode);
             if (amendRecord) {
+                if (amendRecord.newTiplocCode) {
+                    record.tiplocCode = amendRecord.newTiplocCode;
+                }
                 for (const [key, value] of Object.entries(amendRecord)) {
-                    if (key !== 'recordType' && key !== 'tiplocCode' && value !== undefined) {
+                    if (!['recordType','tiplocCode','newTiplocCode'].includes(key) && value !== undefined) {
                         // @ts-ignore We're only copying properties that exist on both types
                         record[key] = value;
                     }
