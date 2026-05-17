@@ -202,9 +202,9 @@ export async function generate(inputStream: AsyncIterable<CifStreamRecord>, outp
                         'LI' +
                         padEnd(li.location, 8) +
                         formatHHMMH(scheduledArrivalTime) +
-                        formatHHMM(scheduledDepartureTime) +
+                        formatHHMMH(scheduledDepartureTime) +
                         formatHHMMH(scheduledPassTime) +
-                        formatHHMMH(publicArrivalTime) +
+                        formatHHMM(publicArrivalTime) +
                         formatHHMM(publicDepartureTime) +
                         padEnd(li.platform, 3) +
                         padEnd(li.line, 3) +
