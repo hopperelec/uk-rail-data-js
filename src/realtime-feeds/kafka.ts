@@ -73,7 +73,7 @@ export default class NetworkRailKafkaClient extends NetworkRailRealtimeClient<Ne
         topic: string,
         onMessage: (message: unknown) => void,
         onError?: (error: unknown) => void,
-        options = {},
+        options: NetworkRailKafkaSubscribeOptions = {},
     ): Promise<NetworkRailRealtimeSubscription> {
         if (!this.subscriptions[topic]) {
             this.subscriptions[topic] = new Set();
