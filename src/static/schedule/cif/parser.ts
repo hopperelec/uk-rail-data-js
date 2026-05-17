@@ -69,7 +69,7 @@ function parseHHMMH(time: string): Temporal.PlainTime {
  * @param time The time string to parse.
  * @returns A Temporal.PlainTime object representing the parsed time, or undefined.
  */
-export function parseOptionalHHMM(time: string): Temporal.PlainTime | undefined {
+function parseOptionalHHMM(time: string): Temporal.PlainTime | undefined {
     if (!time.trim()) return undefined;
     return parseHHMM(time);
 }
@@ -475,16 +475,4 @@ export async function consumeCifStream(stream: AsyncIterable<CifStreamRecord>): 
     }
 
     return data;
-}
-
-/**
- * Parses a time string in the format "hhmm" or "hhmmH" (where 'H' indicates a half minute) into a number of minutes after midnight.
- *
- * @param time The time string to parse.
- * @returns The number of minutes after midnight represented by the time string.
- */
-export function parseScheduleTime(time: string): number {
-    return +time.substring(0, 2) * 60 + // hours
-        +time.substring(2, 4) + // minutes
-        (time.endsWith('H') ? 0.5 : 0); // half minutes
 }
