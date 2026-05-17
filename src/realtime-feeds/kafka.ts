@@ -111,7 +111,7 @@ export default class NetworkRailKafkaClient extends NetworkRailRealtimeClient<Ne
         const subscriptions = this.subscriptions[payload.topic];
         if (!subscriptions) return;
 
-        let messages: unknown;
+        let messages: unknown[];
         try {
             messages = JSON.parse(payload.message.value.toString());
         } catch (err) {
@@ -122,13 +122,9 @@ export default class NetworkRailKafkaClient extends NetworkRailRealtimeClient<Ne
             }
             return;
         }
+
         if (!Array.isArray(messages)) {
-            for (const {onError} of subscriptions) {
-                try {
-                    onError?.(new Error('Expected message to be an array, but got: ' + typeof messages));
-                } catch {}
-            }
-            return;
+            messages = [messages];
         }
 
         for (const message of messages) {
