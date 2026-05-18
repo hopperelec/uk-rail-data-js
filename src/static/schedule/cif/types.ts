@@ -346,23 +346,18 @@ interface LocationRecordBase {
      * May have a suffix (e.g., 'MSTON 2') to distinguish multiple visits.
      */
     location: TIPLOC;
-
     /** The platform number or line identifier. */
     platform?: Routing;
-    /** The line the train uses on departure. */
-    line?: Routing;
-    /** The path the train uses on arrival. */
-    path?: Routing;
 
     /** A set of up to 6 activity codes describing what the train does at this location. */
     activities: Set<ActivityCode>;
 
     /** Engineering allowance, a buffer time for potential engineering work delays. */
-    engineeringAllowance?: string;
+    engineeringAllowance?: Temporal.Duration;
     /** Pathing allowance, a buffer time for operational regulation. */
-    pathingAllowance?: string;
+    pathingAllowance?: Temporal.Duration;
     /** Performance allowance, a buffer time to improve punctuality statistics. */
-    performanceAllowance?: string;
+    performanceAllowance?: Temporal.Duration;
 
     /** If this location record was preceded by a CR (Change en Route) record, its data is stored here. */
     changeEnRoute?: Omit<ChangeEnRouteRecord, 'recordType' | 'location'>;
@@ -372,16 +367,20 @@ interface LocationRecordBase {
 export interface ArrivalLocationRecord extends LocationRecordBase {
     /** Scheduled arrival time, accurate to the half-minute. */
     scheduledArrivalTime: Temporal.PlainTime;
-    /** Scheduled arrival time, accurate to the minute. */
+    /** Public arrival time, accurate to the minute. */
     publicArrivalTime: Temporal.PlainTime;
+    /** The path the train uses on arrival. */
+    path?: Routing;
 }
 
 /** A location record with a scheduled departure time. */
 export interface DepartureLocationRecord extends LocationRecordBase {
     /** Scheduled departure time, accurate to the half-minute. */
     scheduledDepartureTime: Temporal.PlainTime;
-    /** Scheduled departure time, accurate to the minute. */
+    /** Public departure time, accurate to the minute. */
     publicDepartureTime: Temporal.PlainTime;
+    /** The line the train uses on departure. */
+    line?: Routing;
 }
 
 /**
@@ -501,7 +500,7 @@ export interface TiplocRecordBase {
     tpsDescription: string;
     /** 5-digit TOPS location code. */
     stanox?: number;
-    /** Computer Reservation System (CRS) code, 3-character. */
+    /** 3-character Computer Reservation System (CRS) code. */
     crsCode: string;
     /** A 16-character description used in CAPRI. */
     description: string;

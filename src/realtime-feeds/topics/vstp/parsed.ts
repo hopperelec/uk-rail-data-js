@@ -118,8 +118,8 @@ export interface VstpScheduleSegment {
     speed?: number;
     /** A set of up to 6 operating characteristic codes that describe the train's features. */
     operatingCharacteristics: Set<OperatingCharacteristic>;
-    // TODO: Not sure what this corresponds to, but might be able to figure it out by observation.
-    trainClass?: string;
+    /** Indicates if the train has first class seating. */
+    hasFirstClassSeating: boolean;
     /** The train's sleeper accommodation type, if any. */
     sleeperAccommodation?: SleeperAccommodationCode;
     /** The reservation requirements for the train, if any. */

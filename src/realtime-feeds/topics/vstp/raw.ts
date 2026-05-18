@@ -5,14 +5,12 @@ import {
     SleeperAccommodationCode, StpIndicator, TimingLoadCode, TrainCategory, TrainServiceCode, TrainStatus, TrainUID
 } from "../../../static/schedule/cif";
 
+// TODO: Confirm how undefined values are represented
+
 /** Base structure for a location in the VSTP schedule. */
 interface VstpScheduleLocationBase {
     /** The platform number or line identifier. */
     CIF_platform?: Routing;
-    /** The line the train uses on departure. */
-    CIF_line?: Routing;
-    /** The path the train uses on arrival. */
-    CIF_path?: Routing;
     /**
      * A set of up to 6 activity codes describing what the train does at this location,
      *  concatenated into a single string.
@@ -38,10 +36,12 @@ interface VstpScheduleLocationBase {
  * Equivalent to `ArrivalLocationRecord` in CIF types.
  */
 interface VstpScheduleArrival extends VstpScheduleLocationBase {
-    /** The scheduled arrival time, in HHMMSS format. */
+    /** Scheduled arrival time, in HHMMSS format. */
     scheduled_arrival_time: string;
     /** Public arrival time, in HHMMSS format. */
     public_arrival_time?: string;
+    /** The path the train uses on arrival. */
+    CIF_path?: Routing;
 }
 
 /**
@@ -50,10 +50,12 @@ interface VstpScheduleArrival extends VstpScheduleLocationBase {
  * Equivalent to `DepartureLocationRecord` in CIF types.
  */
 interface VstpScheduleDeparture extends VstpScheduleLocationBase {
-    /** The scheduled departure time, in HHMMSS format. */
+    /** Scheduled departure time, in HHMMSS format. */
     scheduled_departure_time: string;
     /** Public departure time, in HHMMSS format. */
     public_departure_time?: string;
+    /** The line the train uses on departure. */
+    CIF_line?: Routing;
 }
 
 /**
@@ -130,8 +132,12 @@ export interface VstpScheduleSegment {
      *  concatenated into a single string.
      */
     CIF_operating_characteristics?: string;
-    // TODO: Not sure what this corresponds to, but might be able to figure it out by observation.
-    CIF_train_class?: string;
+    /**
+     * Indicates if the train has first class seating.
+     *
+     * Undefined or `"B"` indicates the train has first class seating, while `"S"` indicates it does not.
+     */
+    CIF_train_class?: "B" | "S";
     /** The train's sleeper accommodation type, if any. */
     CIF_sleepers?: SleeperAccommodationCode;
     /** The reservation requirements for the train, if any. */

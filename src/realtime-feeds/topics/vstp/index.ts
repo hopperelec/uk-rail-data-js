@@ -69,7 +69,7 @@ export function parseVstpMessage(rawMessage: RawVSTP.VstpMessageWrapper): Envelo
                 timingLoad: segment.CIF_timing_load,
                 speed: segment.CIF_speed === undefined ? undefined : +segment.CIF_speed,
                 operatingCharacteristics: new Set(segment.CIF_operating_characteristics?.split('') ?? []),
-                trainClass: segment.CIF_train_class,
+                hasFirstClassSeating: segment.CIF_train_class !== "S",
                 sleeperAccommodation: segment.CIF_sleepers,
                 reservationRequirements: segment.CIF_reservations,
                 catering: new Set(segment.CIF_catering_code?.split('') ?? []),

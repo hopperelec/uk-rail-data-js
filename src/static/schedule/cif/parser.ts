@@ -155,10 +155,29 @@ export function parseTrainActivities(activity: string): Set<string> {
     return activities;
 }
 
+/**
+ * Parses an allowance string into a Temporal.Duration object.
+ *
+ * An allowance string is a 2-character string representing a time allowance in minutes,
+ *  with an optional 'H' suffix indicating a half minute.
+ * The specification enforces a few more constraints, but this function is intentionally lenient.
+ *
+ * @param allowance The allowance string to parse.
+ * @returns A Temporal.Duration object representing the parsed allowance, or undefined if the input is empty or whitespace.
+ */
+export function parseAllowance(allowance: string): Temporal.Duration | undefined {
+    allowance = allowance.trim();
+    if (!allowance) return;
+    return Temporal.Duration.from({
+        minutes: parseInt(allowance, 10) || 0, // parseInt will ignore the 'H' if it's present
+        seconds: allowance.endsWith('H') ? 30 : 0,
+    });
+}
+
 // #endregion
 
 /**
- * Parses a CIF file from the given path, streaming the file contents in and streaming the records out.
+ * Parses a CIF file from a stream, streaming the file contents in and streaming the records out.
  *
  * Note that this uses the `Temporal` API so, on Node versions prior to 26, a polyfill will be needed.
  *
@@ -318,10 +337,10 @@ export async function* cifStream(fileStream: AsyncIterable<Uint8Array>): AsyncIt
                         publicDepartureTime: parseHHMM(line.substring(15, 19)),
                         platform: line.substring(19, 22).trim() || undefined,
                         line: line.substring(22, 25).trim() || undefined,
-                        engineeringAllowance: line.substring(25, 27).trim() || undefined,
-                        pathingAllowance: line.substring(27, 29).trim() || undefined,
+                        engineeringAllowance: parseAllowance(line.substring(25, 27)),
+                        pathingAllowance: parseAllowance(line.substring(27, 29)),
                         activities: parseTrainActivities(line.substring(29, 41).trim()),
-                        performanceAllowance: line.substring(41, 43).trim() || undefined,
+                        performanceAllowance: parseAllowance(line.substring(41, 43)),
                     };
                 } else console.warn("Warning: 'LO' record encountered without a preceding 'BS' record. It will be ignored.");
                 break;
@@ -341,9 +360,9 @@ export async function* cifStream(fileStream: AsyncIterable<Uint8Array>): AsyncIt
                         line: line.substring(36, 39).trim() || undefined,
                         path: line.substring(39, 42).trim() || undefined,
                         activities: parseTrainActivities(line.substring(42, 54)),
-                        engineeringAllowance: line.substring(54, 56).trim() || undefined,
-                        pathingAllowance: line.substring(56, 58).trim() || undefined,
-                        performanceAllowance: line.substring(58, 60).trim() || undefined,
+                        engineeringAllowance: parseAllowance(line.substring(54, 56)),
+                        pathingAllowance: parseAllowance(line.substring(56, 58)),
+                        performanceAllowance: parseAllowance(line.substring(58, 60)),
                     };
                     if (pendingChangeEnRoute) {
                         const { recordType, location, ...changeEnRoute } = pendingChangeEnRoute;

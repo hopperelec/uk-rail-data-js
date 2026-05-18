@@ -1,5 +1,6 @@
 import { createWriteStream } from 'fs';
 import {CifStreamRecord, NormalIntermediateLocationRecord, PassIntermediateLocationRecord} from './types';
+import {Routing} from "../../../types";
 
 // #region Helpers
 
@@ -57,6 +58,31 @@ function formatHHMM(time?: Temporal.PlainTime) {
 function formatHHMMH(time?: Temporal.PlainTime) {
     if (!time) return ''.padEnd(5, ' ');
     return formatHHMM(time) + (time.second ? 'H' : ' ');
+}
+
+/**
+ * Formats a Temporal.Duration object representing an allowance into a string for the CIF format.
+ *
+ * @param allowance The Temporal.Duration object to format. Should represent a duration between 0 and 99 in whole minutes or between 0 and 9.5 in half-minute increments.
+ * @returns The formatted allowance string.
+ * @throws Error if the allowance is negative or cannot be represented in just two characters
+ */
+function formatAllowance(allowance?: Temporal.Duration): string {
+    if (!allowance) return "  ";
+
+    const totalSeconds = allowance.total('seconds');
+
+    if (totalSeconds < 0) throw new Error("Allowance cannot be negative.");
+
+    const minutes = Math.floor(totalSeconds / 60);
+    if (minutes > 99) throw new Error("Allowance cannot exceed 99 minutes.");
+    const seconds = totalSeconds % 60;
+    if (minutes >= 10 && seconds === 30) throw new Error("Allowances of 10+ minutes cannot include 30-second increments.");
+
+    if (minutes === 0) return seconds === 30 ? ' H' : '  ';
+    if (seconds === 0) return padEnd(minutes, 2);
+    if (seconds === 30) return `${minutes}H`
+    throw new Error("Allowances can only be in whole minutes or half-minute increments.");
 }
 
 /**
@@ -147,10 +173,10 @@ export async function generate(inputStream: AsyncIterable<CifStreamRecord>, outp
                     formatHHMM(originLocation.publicDepartureTime) +
                     padEnd(originLocation.platform, 3) +
                     padEnd(originLocation.line, 3) +
-                    padEnd(originLocation.engineeringAllowance, 2) +
-                    padEnd(originLocation.pathingAllowance, 2) +
+                    formatAllowance(originLocation.engineeringAllowance) +
+                    formatAllowance(originLocation.pathingAllowance) +
                     formatCodeSet(originLocation.activities, 2, 6) +
-                    padEnd(originLocation.performanceAllowance, 2) +
+                    formatAllowance(originLocation.performanceAllowance) +
                     ''.padEnd(37, ' ')
                 );
                 for (const li of intermediateLocations) {
@@ -207,12 +233,12 @@ export async function generate(inputStream: AsyncIterable<CifStreamRecord>, outp
                         formatHHMM(publicArrivalTime) +
                         formatHHMM(publicDepartureTime) +
                         padEnd(li.platform, 3) +
-                        padEnd(li.line, 3) +
-                        padEnd(li.path, 3) +
+                        padEnd('line' in li ? li.line as Routing : undefined, 3) +
+                        padEnd('path' in li ? li.path as Routing : undefined, 3) +
                         formatCodeSet(li.activities, 2, 6) +
-                        padEnd(li.engineeringAllowance, 2) +
-                        padEnd(li.pathingAllowance, 2) +
-                        padEnd(li.performanceAllowance, 2) +
+                        formatAllowance(li.engineeringAllowance) +
+                        formatAllowance(li.pathingAllowance) +
+                        formatAllowance(li.performanceAllowance) +
                         ''.padEnd(20, ' ')
                     );
                 }
